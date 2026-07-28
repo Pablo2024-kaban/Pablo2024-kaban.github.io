@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Р-326М</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+  body { background:#080808; color:#9a9a8a; font-family:'Share Tech Mono', monospace; margin:0; min-height:100vh; display:flex; justify-content:center; padding:12px; }
+  .haze { position:fixed; inset:0; background:repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, transparent 2px); pointer-events:none; }
+  .container { max-width:820px; width:100%; z-index:1; }
+  .top-bar { border:1px solid #1a1a1a; background:#0a0a0a; padding:7px 10px; display:flex; justify-content:space-between; align-items:center; }
+  .hash-top { color:#2a2a1e; font-size:11px; letter-spacing:1px; word-break:break-all; }
+  .clock { color:#151515; font-size:10px; }
+  .radio-chassis { margin-top:12px; background:linear-gradient(180deg,#1c1a12 0%, #0e0d0a 100%); border:2px solid #25231c; border-radius:5px; padding:14px; box-shadow:inset 0 0 28px #000, 0 6px 20px #000; }
+  .radio-top { display:grid; grid-template-columns:1fr 240px; gap:14px; }
+  @media (max-width:780px){ .radio-top{grid-template-columns:1fr} }
+  .display-section { background:#000; border:1px solid #151515; padding:9px; border-radius:2px; }
+  .freq-led { font-size:42px; color:#b0b0a0; text-align:center; letter-spacing:4px; background:#050505; padding:10px; border:1px solid #1a1a1a; }
+  .freq-led small { font-size:10px; color:#2a2a2a; display:block; letter-spacing:1px; }
+  .scale { position:relative; height:34px; background:#080808; border:1px solid #141414; margin-top:10px; overflow:hidden; }
+  .tick { position:absolute; bottom:0; width:1px; background:#1f1f1f; }
+  .tick.major { height:18px; background:#2a2a2a; }
+  .pointer { position:absolute; top:0; bottom:0; width:1px; background:#3a3a3a; }
+  .s-meter { margin-top:9px; display:flex; gap:2px; height:14px; background:#000; border:1px solid #111; padding:2px; }
+  .s-bar { width:8%; background:#0e0e0e; height:100%; }
+  .s-bar.active { background:#3a3a3a; }
+  .waterfall { height:46px; background:#000; border:1px solid #0e0e0e; margin-top:8px; overflow:hidden; }
+  canvas{width:100%;height:100%;display:block; filter:grayscale(1) contrast(0.9);}
+  .knob-section { background:#0f0f0f; border:1px solid #151515; border-radius:3px; padding:10px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .knob { width:110px; height:110px; border-radius:50%; background:radial-gradient(circle at 30% 30%, #3a3a3a 0%, #151515 50%, #070707 100%); border:1px solid #222; position:relative; cursor:grab; touch-action:none; }
+  .knob-mark { position:absolute; left:50%; top:8%; width:2px; height:16px; background:#666; transform:translateX(-50%); }
+  .knob-center { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:12px; height:12px; background:#000; border-radius:50%; border:1px solid #222; }
+  .power-btn { padding:6px 12px; background:#0f0f0f; color:#2a2a2a; border:1px solid #1d1d1d; cursor:pointer; font-family:inherit; font-size:11px; }
+  .power-btn.on { color:#777; border-color:#333; }
+  .controls { display:flex; gap:5px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+  .ctrl-btn { background:#0a0a0a; color:#2e2e2e; border:1px solid #181818; padding:4px 8px; cursor:pointer; font-family:inherit; font-size:10px; }
+  .ctrl-btn:hover{color:#555}
+  input[type=range]{ width:100%; accent-color:#222; height:24px; -webkit-appearance:none; background:#0a0a0a; }
+  input[type=range]::-webkit-slider-thumb{ background:#333; }
+  .freq-info { display:flex; justify-content:space-between; font-size:8px; color:#1a1a1a; margin-top:2px; }
+  .status { margin-top:10px; min-height:70px; background:#000; border:1px solid #0f0f0f; padding:8px; font-size:12px; line-height:1.35; color:#4a4a3a; }
+  .status.locked { border-color:#222; color:#7a7a6a; }
+  .found { background:#050505; border:1px solid #1a1a1a; padding:7px; color:#8a8a7a; }
+  /* Battery compartment - visual batteries */
+  .battery-box { margin-top:18px; border:1px solid #1e1c14; background:linear-gradient(180deg,#16140f 0%, #0e0c08 100%); padding:0; overflow:hidden; position:relative; }
+  .battery-lid { background:repeating-linear-gradient(90deg,#1a1812 0px,#1a1812 20px,#15130f 20px,#15130f 40px); border-bottom:1px solid #222; padding:11px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; user-select:none; }
+  .battery-lid:hover{ background:#1e1c16; }
+  .battery-label { font-size:10px; color:#4a4635; letter-spacing:1px; text-transform:uppercase; }
+  .battery-screws { color:#2a2820; font-size:10px; }
+  .battery-inner { max-height:0; overflow:hidden; transition:max-height 0.75s cubic-bezier(0.4,0,0.2,1), padding 0.6s ease; background:#050505; padding:0 12px; }
+  .battery-box.open .battery-inner { max-height:520px; padding:14px; }
+  .battery-box.open .battery-lid { background:#0a0a0a; border-bottom-color:#131313; }
+  .flag-sleep { font-size:20px; color:#ffcc33; letter-spacing:3px; background:#111; display:inline-block; padding:7px 12px; border:1px solid #333; margin:10px 0; box-shadow:0 0 10px #ffcc3322; }
+  .bat-visual { display:flex; gap:18px; align-items:center; flex-wrap:wrap; }
+  .bat-slot { width:120px; background:#0a0a0a; border:1px inset #222; padding:8px; display:flex; flex-direction:column; gap:8px; }
+  .bat-empty { height:22px; background:#000; border:1px dashed #222; color:#1a1a1a; font-size:8px; display:flex; align-items:center; justify-content:center; letter-spacing:2px; }
+  .bat-removed { display:flex; flex-direction:column; gap:10px; transform:translateX(40px); opacity:0; transition: all 0.6s 0.3s ease; }
+  .battery-box.open .bat-removed { transform:translateX(0); opacity:1; }
+  .battery { width:86px; height:26px; background:linear-gradient(90deg,#2a2a1a 0%, #4a4420 100%); border:1px solid #555; border-radius:3px; display:flex; align-items:center; justify-content:space-between; padding:0 6px; box-shadow:0 2px 6px #000; position:relative; }
+  .battery::after{ content:''; position:absolute; right:-5px; top:50%; transform:translateY(-50%); width:4px; height:12px; background:#888; border-radius:0 2px 2px 0; }
+  .b-plus{font-size:8px;color:#aaa} .b-body{font-size:9px;color:#ffcc66;letter-spacing:1px} .b-minus{font-size:10px;color:#555}
+</style>
+</head>
+<body>
+<div class="haze"></div>
+<div class="container">
+  <div class="top-bar">
+    <span class="hash-top">f84edce385ed38b1b008771628c9df65</span>
+    <span class="clock" id="clock">--:--:--</span>
+  </div>
+
+  <div class="radio-chassis" id="chassis">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+      <button class="power-btn" id="powerBtn" onclick="togglePower()">⏻ ВКЛ</button>
+    </div>
+    <div class="radio-top">
+      <div class="display-section">
+        <div class="freq-led" id="freqDisplay">----<small>кГц</small></div>
+        <div class="scale" id="scale"></div>
+        <div class="s-meter" id="sMeter"></div>
+        <div class="waterfall"><canvas id="wf" width="600" height="46"></canvas></div>
+        <div style="margin-top:9px">
+          <input type="range" id="freqSlider" min="4000" max="5000" value="4077" step="1" disabled>
+          <div class="freq-info"><span>4000</span><span>5000</span></div>
+        </div>
+        <div class="controls">
+          <button class="ctrl-btn" onclick="nudge(-10)">-10</button>
+          <button class="ctrl-btn" onclick="nudge(-1)">-1</button>
+          <button class="ctrl-btn" onclick="autoScan(-1)">SCAN ◀</button>
+          <button class="ctrl-btn" onclick="autoScan(1)">▶ SCAN</button>
+          <button class="ctrl-btn" onclick="nudge(1)">+1</button>
+          <button class="ctrl-btn" onclick="nudge(10)">+10</button>
+        </div>
+        <div class="status" id="status">Питание выключено.</div>
+      </div>
+      <div class="knob-section">
+        <div class="knob" id="knob"><div class="knob-mark"></div><div class="knob-center"></div></div>
+        <div style="font-size:8px; color:#222;">TUNE</div>
+      </div>
+    </div>
+
+    <!-- Battery compartment -->
+    <div class="battery-box" id="batteryBox">
+      <div class="battery-lid" onclick="openBattery()">
+        <span class="battery-label">▭ отсек для батареек — вынуть батарейки и лечь спать</span>
+        <span class="battery-screws">○ ○</span>
+      </div>
+      <div class="battery-inner" id="batteryInner">
+        <div class="bat-visual">
+          <div class="bat-slot">
+            <div class="bat-empty">EMPTY</div>
+            <div class="bat-empty">EMPTY</div>
+          </div>
+          <div class="bat-removed">
+            <div class="battery"><span class="b-plus">+</span><span class="b-body">BR7</span><span class="b-minus">-</span></div>
+            <div class="battery"><span class="b-plus">+</span><span class="b-body">BR7</span><span class="b-minus">-</span></div>
+          </div>
+        </div>
+        <div style="margin-top:14px;">
+          <div style="color:#4a4a3a; font-size:10px; letter-spacing:1px;">БАТАРЕЙКИ ВЫНУТЫ</div>
+          <div class="flag-sleep">SLEEP-TIL-NOON</div>
+          <div style="color:#3a3a32; font-size:11px; margin-top:8px; line-height:1.4;">Ты выключаешь радио, накрываешься пледом с головой.<br>К вечеру приходит комендант с актом об увольнении.<br>Ты пьёшь тёплую воду из батареи.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<audio id="whiteNoise" src="assets/white_noise.wav" loop preload="auto"></audio>
+<audio id="stormAudio" src="assets/radio_storm.mp3" preload="auto" loop></audio>
+<audio id="b7Audio" src="assets/radio_b7.mp3" preload="auto" loop></audio>
+
+<script>
+let powerOn=false, freq=4077, scanning=null;
+const slider=document.getElementById('freqSlider'), display=document.getElementById('freqDisplay'), statusEl=document.getElementById('status');
+const white=document.getElementById('whiteNoise'), storm=document.getElementById('stormAudio'), b7=document.getElementById('b7Audio');
+const knob=document.getElementById('knob'), scaleEl=document.getElementById('scale'), sMeterEl=document.getElementById('sMeter');
+const powerBtn=document.getElementById('powerBtn'), canvas=document.getElementById('wf'), ctx=canvas.getContext('2d');
+
+for(let f=4000; f<=5000; f+=20){ let perc=(f-4000)/10; let tick=document.createElement('div'); tick.className=(f%100===0)?'tick major':'tick'; tick.style.left=perc+'%'; tick.style.height=(f%100===0)?'18px':'8px'; scaleEl.appendChild(tick); }
+let pointer=document.createElement('div'); pointer.className='pointer'; scaleEl.appendChild(pointer);
+for(let i=0;i<12;i++){ let b=document.createElement('div'); b.className='s-bar'; b.id='s'+i; sMeterEl.appendChild(b); }
+
+let audioCtx, gainWhite, gainStorm, gainB7;
+function initAudioCtx(){
+  try{
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    let bufferSize=audioCtx.sampleRate*2, buffer=audioCtx.createBuffer(1,bufferSize,audioCtx.sampleRate), data=buffer.getChannelData(0);
+    for(let i=0;i<bufferSize;i++) data[i]=(Math.random()*2-1)*0.4;
+    let whiteNode=audioCtx.createBufferSource(); whiteNode.buffer=buffer; whiteNode.loop=true;
+    gainWhite=audioCtx.createGain(); gainWhite.gain.value=0; whiteNode.connect(gainWhite).connect(audioCtx.destination); whiteNode.start();
+    gainStorm=audioCtx.createGain(); gainStorm.gain.value=0; gainB7=audioCtx.createGain(); gainB7.gain.value=0;
+    let srcStorm=audioCtx.createMediaElementSource(storm), srcB7=audioCtx.createMediaElementSource(b7);
+    srcStorm.connect(gainStorm).connect(audioCtx.destination); srcB7.connect(gainB7).connect(audioCtx.destination);
+  }catch(e){}
+}
+function togglePower(){
+  if(!powerOn){
+    let box=document.getElementById('batteryBox'); if(box.classList.contains('open')){ box.classList.remove('open'); }
+    powerOn=true; powerBtn.textContent='⏻ ВЫКЛ'; powerBtn.classList.add('on'); slider.disabled=false;
+    statusEl.textContent='ШШШ...'; initAudioCtx(); if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume();
+    white.volume=0.6; white.play().catch(()=>{}); storm.play().catch(()=>{}); b7.play().catch(()=>{}); if(gainWhite) gainWhite.gain.value=0.35;
+    updateRadio(); requestAnimationFrame(waterfall);
+  }else{
+    powerOn=false; powerBtn.textContent='⏻ ВКЛ'; powerBtn.classList.remove('on'); slider.disabled=true;
+    white.pause(); storm.pause(); b7.pause(); if(gainWhite) gainWhite.gain.value=0; if(gainStorm) gainStorm.gain.value=0; if(gainB7) gainB7.gain.value=0;
+    statusEl.textContent='Питание выключено.';
+  }
+}
+function updateRadio(){
+  if(!powerOn) return;
+  display.innerHTML=freq+'<small>кГц</small>'; slider.value=freq;
+  pointer.style.left=((freq-4000)/10)+'%';
+  let deg=((freq-4000)/1000)*270-135; knob.style.transform=`rotate(${deg}deg)`;
+  let dStorm=Math.abs(freq-4210), dB7=Math.abs(freq-4825);
+  let stormVol=Math.max(0,1-dStorm/14), b7Vol=Math.max(0,1-dB7/14);
+  let whiteVol=1-Math.max(stormVol,b7Vol)*0.85; if(whiteVol<0.05) whiteVol=0.05;
+  white.volume=whiteVol; storm.volume=stormVol; b7.volume=b7Vol;
+  if(audioCtx){
+    if(gainWhite) gainWhite.gain.linearRampToValueAtTime(whiteVol*0.4,audioCtx.currentTime+0.08);
+    if(gainStorm) gainStorm.gain.linearRampToValueAtTime(stormVol*0.9,audioCtx.currentTime+0.08);
+    if(gainB7) gainB7.gain.linearRampToValueAtTime(b7Vol*0.9,audioCtx.currentTime+0.08);
+  }
+  let strength=Math.max(stormVol,b7Vol), bars=Math.floor(strength*12);
+  for(let i=0;i<12;i++){ let el=document.getElementById('s'+i); el.className='s-bar'+(i<bars?' active':''); }
+  if(freq===4210){
+    statusEl.className='status locked';
+    statusEl.innerHTML=`<div class="found">> 4210 кГц<br><audio controls src="assets/radio_storm.mp3" autoplay style="width:100%"></audio><br>...внимание, штормовое предупреждение... радиационный фон критический... всем гражданам оставаться в укрытиях... смены на объектах Б-один, Б-три, Б-пять отменены... кодовое слово дня — UKRYTIE-12...</div>`;
+  }else if(freq===4825){
+    statusEl.className='status locked';
+    // БЕЗ ССЫЛОК - только аудио и текст репо
+    statusEl.innerHTML=`<div class="found">> 4825 кГц<br><audio controls src="assets/radio_b7.mp3" autoplay style="width:100%"></audio><br>...передача для смены Б-семь... кодовое слово дня — RASSVET-47... архив ежедневных сводок я уже залил в Pastebin, репозиторий reactor-b7-daily...</div>`;
+  }else if(dStorm<=6 || dB7<=6){
+    statusEl.className='status'; statusEl.textContent=`${freq} — ...сигнал... S=${bars}`;
+  }else{
+    statusEl.className='status'; statusEl.textContent=`${freq} — ШШШ... S=${bars}`;
+  }
+}
+function nudge(d){ if(!powerOn) togglePower(); freq=Math.min(5000,Math.max(4000,freq+d)); updateRadio(); }
+function autoScan(dir){ if(!powerOn) togglePower(); if(scanning) clearInterval(scanning); scanning=setInterval(()=>{ freq+=dir; if(freq>5000||freq<4000){ clearInterval(scanning); return; } updateRadio(); if(freq===4210||freq===4825) clearInterval(scanning); },115); }
+let isDragging=false,lastAngle=0; knob.addEventListener('pointerdown',e=>{isDragging=true;knob.setPointerCapture(e.pointerId);lastAngle=getAngle(e);});
+knob.addEventListener('pointermove',e=>{ if(!isDragging) return; let ang=getAngle(e), delta=ang-lastAngle; if(delta>180) delta-=360; if(delta<-180) delta+=360; if(Math.abs(delta)>1){ freq=Math.min(5000,Math.max(4000,freq+Math.round(delta*1.3))); updateRadio(); lastAngle=ang; }});
+knob.addEventListener('pointerup',()=>{isDragging=false;});
+function getAngle(e){ let r=knob.getBoundingClientRect(), cx=r.left+r.width/2, cy=r.top+r.height/2; return Math.atan2(e.clientY-cy,e.clientX-cx)*180/Math.PI; }
+document.getElementById('chassis').addEventListener('wheel',e=>{ if(!powerOn) return; e.preventDefault(); nudge(e.deltaY>0?-1:1); },{passive:false});
+window.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') nudge(-1); if(e.key==='ArrowRight') nudge(1); });
+let wfOffset=0;
+function waterfall(){
+  if(!powerOn) return;
+  // полностью монохромный шум, без цветных подсказок
+  ctx.fillStyle='rgba(0,0,0,0.22)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  for(let x=0;x<canvas.width;x+=3){
+    let noise = Math.random();
+    let y = Math.floor(Math.random()*canvas.height);
+    let f = 4000 + (x/canvas.width)*1000;
+    // никаких цветных пиков - только одинаковый серый шум
+    let brightness = 0.1 + noise*0.25;
+    ctx.fillStyle=`rgba(${100*brightness},${100*brightness},${100*brightness},${0.3+noise*0.4})`;
+    ctx.fillRect(x, y, 2, 1);
+  }
+  wfOffset=(wfOffset+1)%canvas.height;
+  let cx=((freq-4000)/1000)*canvas.width;
+  ctx.fillStyle='rgba(50,50,50,0.6)'; ctx.fillRect(cx,0,1,canvas.height);
+  requestAnimationFrame(waterfall);
+}
+function openBattery(){
+  let box=document.getElementById('batteryBox');
+  if(!box.classList.contains('open')){
+    box.classList.add('open');
+    if(powerOn) togglePower();
+    white.pause(); storm.pause(); b7.pause();
+    // no audio - just visual
+  } else {
+    box.classList.remove('open');
+  }
+}
+setInterval(()=>{let d=new Date(); let el=document.getElementById('clock'); if(el) el.textContent=d.toLocaleTimeString();},1000);
+updateRadio();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a223f410fd38e31d',t:'MTc4NTI0MjQzNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
