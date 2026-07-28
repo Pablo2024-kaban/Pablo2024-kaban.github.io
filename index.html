@@ -23,8 +23,8 @@
   .s-meter{margin-top:9px;display:flex;gap:2px;height:14px;background:#000;border:1px solid #111;padding:2px}
   .s-bar{width:8%;background:#0e0e0e;height:100%}.s-bar.active{background:#3a3a3a}
   .waterfall{height:46px;background:#000;border:1px solid #0e0e0e;margin-top:8px;overflow:hidden} canvas{width:100%;height:100%;display:block;filter:grayscale(1)}
-  .knob-section{background:#0f0f0f;border:1px solid #151515;padding:10px;display:flex;flex-direction:column;align-items:center}
-  .knob{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #3a3a3a 0%, #151515 50%, #070707 100%);border:1px solid #222;position:relative;cursor:grab;touch-action:none}
+  .knob-section{background:#0f0f0f;border:1px solid #151515;padding:10px;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .knob{width:110px;height:110px;border-radius:50%;background:radial-gradient(circle at 30% 30%, #3a3a3a 0%, #151515 50%, #070707 100%);border:1px solid #222;position:relative;cursor:grab;touch-action:none;flex-shrink:0}
   .knob-mark{position:absolute;left:50%;top:8%;width:2px;height:16px;background:#666;transform:translateX(-50%)}
   .knob-center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#000;border-radius:50%;border:1px solid #222}
   .power-btn{padding:6px 12px;background:#0f0f0f;color:#2a2a2a;border:1px solid #1d1d1d;cursor:pointer;font-family:inherit;font-size:11px}
@@ -35,20 +35,43 @@
   .freq-info{display:flex;justify-content:space-between;font-size:8px;color:#1a1a1a}
   .status{margin-top:10px;min-height:70px;background:#000;border:1px solid #0f0f0f;padding:8px;font-size:12px;line-height:1.35;color:#4a4a3a}
   .status.locked{border-color:#222;color:#7a7a6a}.found{background:#050505;border:1px solid #1a1a1a;padding:7px;color:#8a8a7a}
-  .battery-box{margin-top:18px;border:1px solid #1e1c14;background:linear-gradient(180deg,#16140f 0%, #0e0c08 100%);overflow:hidden}
-  .battery-lid{background:repeating-linear-gradient(90deg,#1a1812 0px,#1a1812 20px,#15130f 20px,#15130f 40px);border-bottom:1px solid #222;padding:11px 12px;cursor:pointer;display:flex;justify-content:space-between}
-  .battery-label{font-size:10px;color:#4a4635;text-transform:uppercase}.battery-screws{color:#2a2820;font-size:10px}
-  .battery-inner{max-height:0;overflow:hidden;transition:max-height 0.75s ease,padding 0.6s ease;background:#050505;padding:0 12px}
-  .battery-box.open .battery-inner{max-height:520px;padding:14px}
-  .flag-sleep{font-size:20px;color:#ffcc33;letter-spacing:3px;background:#111;display:inline-block;padding:7px 12px;border:1px solid #333;margin:10px 0}
-  .bat-visual{display:flex;gap:18px;align-items:center}
-  .bat-slot{width:120px;background:#0a0a0a;border:1px inset #222;padding:8px;display:flex;flex-direction:column;gap:8px}
-  .bat-empty{height:22px;background:#000;border:1px dashed #222;color:#1a1a1a;font-size:8px;display:flex;align-items:center;justify-content:center;letter-spacing:2px}
-  .bat-removed{display:flex;flex-direction:column;gap:10px;transform:translateX(40px);opacity:0;transition:all 0.6s 0.3s ease}
-  .battery-box.open .bat-removed{transform:translateX(0);opacity:1}
-  .battery{width:86px;height:26px;background:linear-gradient(90deg,#2a2a1a 0%, #4a4420 100%);border:1px solid #555;border-radius:3px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;position:relative}
-  .battery::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:4px;height:12px;background:#888;border-radius:0 2px 2px 0}
-  .b-plus{font-size:8px;color:#aaa}.b-body{font-size:9px;color:#ffcc66}.b-minus{font-size:10px;color:#555}
+
+  /* Battery under knob - visual rectangular lid */
+  .battery-under{ width:100%; margin-top:6px; }
+  .battery-box{ width:100%; border:1px solid #201e15; background:#0a0906; border-radius:3px; overflow:hidden; }
+  .battery-lid-visual{
+    width:100%; height:64px; background:#1d1b12; border:1px solid #2a281c; border-radius:2px;
+    position:relative; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    box-shadow:inset 0 1px 0 #3a3828, inset 0 -1px 0 #000, 0 2px 4px #000; transition: all 0.2s;
+  }
+  .battery-lid-visual:hover{ background:#232114; }
+  .battery-lid-visual::before{
+    content:''; position:absolute; top:6px; left:6px; right:6px; height:8px;
+    background:repeating-linear-gradient(90deg,#2a281c 0px,#2a281c 2px,#1d1b12 2px,#1d1b12 6px);
+    opacity:0.6; border-radius:1px;
+  }
+  .battery-lid-visual::after{
+    content:''; position:absolute; bottom:6px; left:6px; right:6px; height:8px;
+    background:repeating-linear-gradient(90deg,#2a281c 0px,#2a281c 2px,#1d1b12 2px,#1d1b12 6px);
+    opacity:0.6; border-radius:1px;
+  }
+  .lid-screw{ position:absolute; width:6px; height:6px; background:#0a0a0a; border:1px solid #3a382a; border-radius:50%; box-shadow:inset 0 1px 1px #555; }
+  .lid-screw.tl{ top:4px; left:4px; } .lid-screw.tr{ top:4px; right:4px; }
+  .lid-screw.bl{ bottom:4px; left:4px; } .lid-screw.br{ bottom:4px; right:4px; }
+  .lid-text{ font-size:9px; color:#5a5642; letter-spacing:0.5px; text-align:center; max-width:150px; line-height:1.2; margin-top:4px; text-transform:lowercase; }
+  .battery-box.open .battery-lid-visual{ background:#0a0a08; border-color:#111; transform:translateY(-2px); box-shadow:inset 0 0 10px #000; }
+  .battery-box.open .battery-lid-visual .lid-text{ color:#2a2a20; }
+  .battery-inner{ max-height:0; overflow:hidden; transition:max-height 0.7s cubic-bezier(0.4,0,0.2,1), padding 0.5s; background:#050505; padding:0 10px; }
+  .battery-box.open .battery-inner{ max-height:420px; padding:10px; }
+  .flag-sleep{ font-size:14px; color:#ffcc33; letter-spacing:2px; background:#111; display:inline-block; padding:5px 8px; border:1px solid #333; margin:8px 0; }
+  .bat-visual{display:flex; gap:12px; align-items:center; justify-content:center; }
+  .bat-slot{ width:96px; background:#080808; border:1px inset #1e1e1e; padding:6px; display:flex; flex-direction:column; gap:6px; }
+  .bat-empty{ height:18px; background:#000; border:1px dashed #1c1c1c; color:#141414; font-size:7px; display:flex; align-items:center; justify-content:center; letter-spacing:1px; }
+  .bat-removed{ display:flex; flex-direction:column; gap:8px; transform:translateY(20px); opacity:0; transition:all 0.5s 0.25s ease; }
+  .battery-box.open .bat-removed{ transform:translateY(0); opacity:1; }
+  .battery{ width:72px; height:20px; background:linear-gradient(90deg,#2a2a1a 0%, #3d381c 100%); border:1px solid #444; border-radius:2px; display:flex; align-items:center; justify-content:space-between; padding:0 4px; position:relative; }
+  .battery::after{ content:''; position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:3px; height:9px; background:#666; border-radius:0 2px 2px 0; }
+  .b-plus{font-size:6px;color:#888} .b-body{font-size:7px;color:#ffcc66} .b-minus{font-size:8px;color:#444}
 </style>
 </head>
 <body>
@@ -66,21 +89,44 @@
         <div class="controls"><button class="ctrl-btn" data-d="-10">-10</button><button class="ctrl-btn" data-d="-1">-1</button><button class="ctrl-btn" id="scanL">SCAN ◀</button><button class="ctrl-btn" id="scanR">▶ SCAN</button><button class="ctrl-btn" data-d="1">+1</button><button class="ctrl-btn" data-d="10">+10</button></div>
         <div class="status" id="status">Питание выключено. Нажми ВКЛ.</div>
       </div>
-      <div class="knob-section"><div class="knob" id="knob"><div class="knob-mark"></div><div class="knob-center"></div></div><div style="font-size:8px;color:#222">TUNE</div></div>
-    </div>
-    <div class="battery-box" id="batteryBox">
-      <div class="battery-lid" id="batLid"><span class="battery-label">▭ отсек для батареек — вынуть батарейки и лечь спать</span><span class="battery-screws">○ ○</span></div>
-      <div class="battery-inner"><div class="bat-visual"><div class="bat-slot"><div class="bat-empty">EMPTY</div><div class="bat-empty">EMPTY</div></div><div class="bat-removed"><div class="battery"><span class="b-plus">+</span><span class="b-body">BR7</span><span class="b-minus">-</span></div><div class="battery"><span class="b-plus">+</span><span class="b-body">BR7</span><span class="b-minus">-</span></div></div></div><div style="margin-top:14px"><div style="color:#4a4a3a;font-size:10px;letter-spacing:1px">БАТАРЕЙКИ ВЫНУТЫ</div><div class="flag-sleep">SLEEP-TIL-NOON</div><div style="color:#3a3a32;font-size:11px;margin-top:8px;line-height:1.4">Ты выключаешь радио, накрываешься пледом с головой.<br>К вечеру приходит комендант с актом об увольнении.<br>Ты пьёшь тёплую воду из батареи.</div></div></div>
+      <div class="knob-section">
+        <div class="knob" id="knob"><div class="knob-mark"></div><div class="knob-center"></div></div>
+        <div style="font-size:7px;color:#333;letter-spacing:1px">TUNE</div>
+
+        <!-- ОТСЕК ДЛЯ БАТАРЕЕК ПОД КРУТИЛКОЙ В ПРЯМОУГОЛЬНИКЕ -->
+        <div class="battery-under">
+          <div class="battery-box" id="batteryBox">
+            <div class="battery-lid-visual" id="batLid">
+              <div class="lid-screw tl"></div><div class="lid-screw tr"></div>
+              <div class="lid-screw bl"></div><div class="lid-screw br"></div>
+              <div class="lid-text">вынуть батарейки и лечь спать</div>
+            </div>
+            <div class="battery-inner">
+              <div class="bat-visual">
+                <div class="bat-slot"><div class="bat-empty">EMPTY</div><div class="bat-empty">EMPTY</div></div>
+                <div class="bat-removed">
+                  <div class="battery"><span class="b-plus">+</span><span class="b-body">BR7</span><span class="b-minus">-</span></div>
+                  <div class="battery"><span class="b-plus">+</span><span class="b-body">BR7</span><span class="b-minus">-</span></div>
+                </div>
+              </div>
+              <div style="margin-top:10px;text-align:center">
+                <div style="color:#4a4a3a;font-size:8px;letter-spacing:1px">БАТАРЕЙКИ ВЫНУТЫ</div>
+                <div class="flag-sleep">SLEEP-TIL-NOON</div>
+                <div style="color:#2e2e26;font-size:9px;margin-top:6px;line-height:1.3">Ты выключаешь радио, накрываешься пледом.<br>Комендант с актом.<br>Вода из батареи.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 </div>
 
-<!-- ТВОИ ФАЙЛЫ В КОРНЕ, БЕЗ assets/ -->
-<audio id="stormAudio" src="u.mp3" preload="auto" loop></audio>
-<audio id="b7Audio" src="Pastebin.mp3" preload="auto" loop></audio>
+<audio id="stormAudio" src="assets/radio_storm.mp3" preload="auto" loop></audio>
+<audio id="b7Audio" src="assets/radio_b7.mp3" preload="auto" loop></audio>
 
 <script>
-// Простой надежный звук без WebAudio для mp3 - только volume
 let powerOn=false, freq=4077, scanning=null;
 const slider=document.getElementById('freqSlider'), display=document.getElementById('freqDisplay'), statusEl=document.getElementById('status');
 const storm=document.getElementById('stormAudio'), b7=document.getElementById('b7Audio');
@@ -91,11 +137,10 @@ for(let f=4000; f<=5000; f+=20){ let perc=(f-4000)/10; let tick=document.createE
 let pointer=document.createElement('div'); pointer.className='pointer'; scaleEl.appendChild(pointer);
 for(let i=0;i<12;i++){ let b=document.createElement('div'); b.className='s-bar'; b.id='s'+i; sMeterEl.appendChild(b); }
 
-// Белый шум - генерируем на WebAudio, не нужен файл
 let audioCtx, whiteNode, whiteGain;
 function initWhite(){
   try{
-    audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
     let len=audioCtx.sampleRate*2, buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate), d=buf.getChannelData(0);
     for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*0.35;
     whiteNode=audioCtx.createBufferSource(); whiteNode.buffer=buf; whiteNode.loop=true;
@@ -103,7 +148,6 @@ function initWhite(){
     whiteNode.connect(whiteGain).connect(audioCtx.destination); whiteNode.start();
   }catch(e){}
 }
-
 function togglePower(){
   if(!powerOn){
     let box=document.getElementById('batteryBox'); if(box.classList.contains('open')) box.classList.remove('open');
@@ -111,7 +155,6 @@ function togglePower(){
     if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
     powerOn=true; powerBtn.textContent='⏻ ВЫКЛ'; powerBtn.classList.add('on'); slider.disabled=false;
     statusEl.textContent='ШШШ...';
-    // стартуем оба mp3 после клика - браузер разрешает
     storm.volume=0; b7.volume=0;
     storm.play().catch(()=>{}); b7.play().catch(()=>{});
     if(whiteGain) whiteGain.gain.value=0.35;
@@ -123,7 +166,6 @@ function togglePower(){
     statusEl.textContent='Питание выключено.';
   }
 }
-
 function updateRadio(){
   if(!powerOn) return;
   display.innerHTML=freq+'<small>кГц</small>'; slider.value=freq;
@@ -138,17 +180,16 @@ function updateRadio(){
   for(let i=0;i<12;i++){ document.getElementById('s'+i).className='s-bar'+(i<bars?' active':''); }
   if(freq===4210){
     statusEl.className='status locked';
-    statusEl.innerHTML=`<div class="found">> 4210 кГц — LOCK<br>...внимание, штормовое предупреждение... радиационный фон критический... смены на объектах Б-один, Б-три, Б-пять отменены... кодовое слово дня — UKRYTIE-12...</div>`;
+    statusEl.innerHTML=`<div class="found">> 4210 кГц — LOCK</div>`;
   }else if(freq===4825){
     statusEl.className='status locked';
-    statusEl.innerHTML=`<div class="found">> 4825 кГц — LOCK<br>...передача для смены Б-семь... кодовое слово дня — RASSVET-47... архив ежедневных сводок я уже залил в Pastebin, репозиторий reactor-b7-daily...</div>`;
+    statusEl.innerHTML=`<div class="found">> 4825 кГц — LOCK</div>`;
   }else if(dS<=6 || dB<=6){
     statusEl.className='status'; statusEl.textContent=`${freq} — ...сигнал... S=${bars}`;
   }else{
     statusEl.className='status'; statusEl.textContent=`${freq} — ШШШ... S=${bars}`;
   }
 }
-
 function nudge(d){ if(!powerOn) togglePower(); freq=Math.min(5000,Math.max(4000,freq+d)); updateRadio(); }
 function autoScan(dir){ if(!powerOn) togglePower(); if(scanning) clearInterval(scanning); scanning=setInterval(()=>{ freq+=dir; if(freq>5000||freq<4000){ clearInterval(scanning); return; } updateRadio(); if(freq===4210||freq===4825) clearInterval(scanning); },115); }
 
