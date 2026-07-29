@@ -131,8 +131,6 @@ let powerOn=false, freq=4077, scanning=null;
 const slider=document.getElementById('freqSlider'), display=document.getElementById('freqDisplay'), statusEl=document.getElementById('status');
 const storm=document.getElementById('stormAudio'), b7=document.getElementById('b7Audio');
 const knob=document.getElementById('knob'), scaleEl=document.getElementById('scale'), sMeterEl=document.getElementById('sMeter');
-storm.addEventListener('error', e => showAudioError('Радио-шум', e));
-b7.addEventListener('error', e => showAudioError('Канал Б-7', e));
 const powerBtn=document.getElementById('powerBtn'), canvas=document.getElementById('wf'), ctx=canvas.getContext('2d');
 
 for(let f=4000; f<=5000; f+=20){ let perc=(f-4000)/10; let tick=document.createElement('div'); tick.className=(f%100===0)?'tick major':'tick'; tick.style.left=perc+'%'; tick.style.height=(f%100===0)?'18px':'8px'; scaleEl.appendChild(tick); }
@@ -140,21 +138,12 @@ let pointer=document.createElement('div'); pointer.className='pointer'; scaleEl.
 for(let i=0;i<12;i++){ let b=document.createElement('div'); b.className='s-bar'; b.id='s'+i; sMeterEl.appendChild(b); }
 
 let audioCtx, whiteNode, whiteGain;
-let audioError = '';
 
-function showAudioError(label, error) {
-  console.error(`${label}:`, error);
-  audioError = `${label}: файл не найден или формат не поддерживается`;
-  statusEl.className = 'status';
-  statusEl.textContent = audioError;
-}
-
-function startAudio(audio, label) {
-  // play() вызывается только из обработчика клика/жеста пользователя,
-  // поэтому браузер не блокирует воспроизведение.
+function startAudio(audio) {
+  // Ошибки воспроизведения не выводим в интерфейс и консоль.
   const result = audio.play();
   if (result && typeof result.catch === 'function') {
-    result.catch(error => showAudioError(label, error));
+    result.catch(() => {});
   }
 }
 
@@ -184,13 +173,13 @@ function togglePower(){
 
     // Не скрываем ошибку play(): раньше она подавлялась пустым catch().
     // Вызов остаётся внутри клика по кнопке питания.
-    startAudio(storm, 'Радио-шум');
-    startAudio(b7, 'Канал Б-7');
+    startAudio(storm);
+    startAudio(b7);
     if(whiteGain) whiteGain.gain.value=0.35;
     updateRadio(); requestAnimationFrame(waterfall);
   }else{
     powerOn=false; powerBtn.textContent='⏻ ВКЛ'; powerBtn.classList.remove('on'); slider.disabled=true;
-    try{ stopAudio(storm); stopAudio(b7); }catch(e){ console.error(e); }
+    try{ stopAudio(storm); stopAudio(b7); }catch(e){}
     if(whiteGain) whiteGain.gain.value=0;
     statusEl.textContent='Питание выключено.';
   }
