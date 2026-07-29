@@ -81,8 +81,8 @@
   </div>
 </div>
 
-<audio id="stormAudio" src="u.mp3" preload="auto"></audio>
-<audio id="b7Audio" src="Pastebin.mp3" preload="auto"></audio>
+<audio id="stormAudio" src="u.mp3" preload="auto" loop></audio>
+<audio id="b7Audio" src="Pastebin.mp3" preload="auto" loop></audio>
 
 <script>
 let powerOn=false, freq=4077, scanning=null;
@@ -101,7 +101,7 @@ function initWhite(){
     if(audioCtx){ try{ audioCtx.close(); }catch(e){} }
     audioCtx=new (window.AudioContext||window.webkitAudioContext)();
     let len=audioCtx.sampleRate*2, buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate), d=buf.getChannelData(0);
-    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*0.36;
+    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*0.38;
     whiteNode=audioCtx.createBufferSource(); whiteNode.buffer=buf; whiteNode.loop=true;
     whiteGain=audioCtx.createGain(); whiteGain.gain.value=0;
     whiteNode.connect(whiteGain).connect(audioCtx.destination); whiteNode.start();
@@ -111,15 +111,13 @@ function initWhite(){
 function togglePower(){
   if(!powerOn){
     let box=document.getElementById('batteryBox'); if(box.classList.contains('open')) box.classList.remove('open');
-    initWhite(); if(audioCtx) audioCtx.resume().catch(()=>{});
+    initWhite(); if(audioCtx) audioCtx.resume();
     powerOn=true; powerBtn.textContent='⏻ ВЫКЛ'; powerBtn.classList.add('on'); slider.disabled=false;
-    statusEl.textContent='ШШШ...';
-    storm.volume=0; b7.volume=0;
-    storm.currentTime=0; b7.currentTime=0;
-    try{ storm.play(); }catch(e){} try{ b7.play(); }catch(e){}
-    // паузим сразу чтобы не было дубля, потом включим нужный
-    try{ storm.pause(); b7.pause(); }catch(e){}
+    // запускаем ОБА mp3 сразу тихо, чтобы разблокировать звук одним кликом, дальше только громкость
+    storm.volume=0; b7.volume=0; storm.currentTime=0; b7.currentTime=0;
+    storm.play().catch(()=>{}); b7.play().catch(()=>{});
     if(whiteGain) whiteGain.gain.value=0.38;
+    statusEl.textContent='ШШШ...';
     updateRadio(); requestAnimationFrame(waterfall);
   }else{
     powerOn=false; powerBtn.textContent='⏻ ВКЛ'; powerBtn.classList.remove('on'); slider.disabled=true;
@@ -135,25 +133,19 @@ function updateRadio(){
   ptr.style.left=((freq-4000)/10)+'%';
   let deg=((freq-4000)/1000)*270-135; knob.style.transform=`rotate(${deg}deg)`;
   let dS=Math.abs(freq-4210), dB=Math.abs(freq-4825);
-  let bars = Math.max(0, 12 - Math.min(dS,dB));
+  let sVol=Math.max(0,1-dS/14), bVol=Math.max(0,1-dB/14);
+  let wVol=1-Math.max(sVol,bVol)*0.85; if(wVol<0.05) wVol=0.05;
+  storm.volume=sVol; b7.volume=bVol;
+  if(whiteGain) whiteGain.gain.value=wVol*0.38;
+  let bars=Math.floor(Math.max(sVol,bVol)*12);
   for(let i=0;i<12;i++){ document.getElementById('s'+i).className='s-bar'+(i<bars?' active':''); }
-
-  // ШУМ + один mp3
   if(freq===4210){
-    if(whiteGain) whiteGain.gain.value=0.06;
-    try{ b7.pause(); }catch(e){}
-    try{ if(storm.paused){ storm.currentTime=0; storm.play(); } }catch(e){}
     statusEl.className='status locked';
     statusEl.innerHTML=`<div class="found">> 4210 кГц — LOCK</div>`;
   }else if(freq===4825){
-    if(whiteGain) whiteGain.gain.value=0.06;
-    try{ storm.pause(); }catch(e){}
-    try{ if(b7.paused){ b7.currentTime=0; b7.play(); } }catch(e){}
     statusEl.className='status locked';
     statusEl.innerHTML=`<div class="found">> 4825 кГц — LOCK</div>`;
   }else{
-    if(whiteGain) whiteGain.gain.value=0.38;
-    try{ storm.pause(); b7.pause(); }catch(e){}
     statusEl.className='status';
     if(dS<=8) statusEl.textContent=`${freq} — ...сигнал... S=${bars}`;
     else if(dB<=8) statusEl.textContent=`${freq} — ...сигнал... S=${bars}`;
@@ -182,7 +174,7 @@ function waterfall(){
   if(!powerOn) return;
   ctx.fillStyle='rgba(0,0,0,0.22)'; ctx.fillRect(0,0,canvas.width,canvas.height);
   for(let x=0;x<canvas.width;x+=3){ let y=Math.random()*canvas.height; ctx.fillStyle='rgba(90,90,90,'+(0.2+Math.random()*0.3)+')'; ctx.fillRect(x,y,1,1); }
-  let cx=((freq-4000)/1000)*canvas.width; ctx.fillStyle='rgba(60,60,60,0.6)'; ctx.fillRect(cx,0,1,canvas.height); requestAnimationFrame(waterfall);
+  let cx=((freq-4000)/1000)*canvas.width; ctx.fillStyle='rgba(50,50,50,0.6)'; ctx.fillRect(cx,0,1,canvas.height); requestAnimationFrame(waterfall);
 }
 document.getElementById('batLid').addEventListener('click', ()=>{
   let box=document.getElementById('batteryBox');
