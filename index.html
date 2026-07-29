@@ -87,7 +87,7 @@
         <div class="waterfall"><canvas id="wf" width="600" height="46"></canvas></div>
         <div style="margin-top:9px"><input type="range" id="freqSlider" min="4000" max="5000" value="4077" step="1" disabled><div class="freq-info"><span>4000</span><span>5000</span></div></div>
         <div class="controls"><button class="ctrl-btn" data-d="-10">-10</button><button class="ctrl-btn" data-d="-1">-1</button><button class="ctrl-btn" id="scanL">SCAN ◀</button><button class="ctrl-btn" id="scanR">▶ SCAN</button><button class="ctrl-btn" data-d="1">+1</button><button class="ctrl-btn" data-d="10">+10</button></div>
-        <div class="status" id="status">Питание выключено</div>
+        <div class="status" id="status">Питание выключено. Нажми ВКЛ.</div>
       </div>
       <div class="knob-section">
         <div class="knob" id="knob"><div class="knob-mark"></div><div class="knob-center"></div></div>
@@ -99,7 +99,7 @@
             <div class="battery-lid-visual" id="batLid">
               <div class="lid-screw tl"></div><div class="lid-screw tr"></div>
               <div class="lid-screw bl"></div><div class="lid-screw br"></div>
-              <div class="lid-text">Вынуть батарейки и лечь спать</div>
+              <div class="lid-text">вынуть батарейки и лечь спать</div>
             </div>
             <div class="battery-inner">
               <div class="bat-visual">
@@ -112,7 +112,7 @@
               <div style="margin-top:10px;text-align:center">
                 <div style="color:#4a4a3a;font-size:8px;letter-spacing:1px">БАТАРЕЙКИ ВЫНУТЫ</div>
                 <div class="flag-sleep">SLEEP-TIL-NOON</div>
-                <div style="color:#2e2e26;font-size:9px;margin-top:6px;line-height:1.3">Ты выключаешь радио, накрываешься пледом.<br>Вечером придет начальник с актом об увольнении.<br></div>
+                <div style="color:#2e2e26;font-size:9px;margin-top:6px;line-height:1.3">Ты выключаешь радио, накрываешься пледом.<br>Комендант с актом.<br>Вода из батареи.</div>
               </div>
             </div>
           </div>
@@ -123,14 +123,22 @@
   </div>
 </div>
 
-<audio id="stormAudio" src="u.mp3" preload="auto" loop></audio>
-<audio id="b7Audio" src="Pastebin.mp3" preload="auto" loop></audio>
+<audio id="stormAudio" preload="auto" loop>
+  <source src="./assets/u.mp3" type="audio/mpeg">
+  <source src="./assets/radio_storm.ogg" type="audio/ogg">
+</audio>
+<audio id="b7Audio" preload="auto" loop>
+  <source src="./assets/Pastebin.mp3" type="audio/mpeg">
+  <source src="./assets/radio_b7.ogg" type="audio/ogg">
+</audio>
 
 <script>
 let powerOn=false, freq=4077, scanning=null;
 const slider=document.getElementById('freqSlider'), display=document.getElementById('freqDisplay'), statusEl=document.getElementById('status');
 const storm=document.getElementById('stormAudio'), b7=document.getElementById('b7Audio');
 const knob=document.getElementById('knob'), scaleEl=document.getElementById('scale'), sMeterEl=document.getElementById('sMeter');
+storm.addEventListener('error', e => showAudioError('Радио-шум', e));
+b7.addEventListener('error', e => showAudioError('Канал Б-7', e));
 const powerBtn=document.getElementById('powerBtn'), canvas=document.getElementById('wf'), ctx=canvas.getContext('2d');
 
 for(let f=4000; f<=5000; f+=20){ let perc=(f-4000)/10; let tick=document.createElement('div'); tick.className=(f%100===0)?'tick major':'tick'; tick.style.left=perc+'%'; tick.style.height=(f%100===0)?'18px':'8px'; scaleEl.appendChild(tick); }
@@ -138,6 +146,28 @@ let pointer=document.createElement('div'); pointer.className='pointer'; scaleEl.
 for(let i=0;i<12;i++){ let b=document.createElement('div'); b.className='s-bar'; b.id='s'+i; sMeterEl.appendChild(b); }
 
 let audioCtx, whiteNode, whiteGain;
+let audioError = '';
+
+function showAudioError(label, error) {
+  console.error(`${label}:`, error);
+  audioError = `${label}: файл не найден или формат не поддерживается`;
+  statusEl.className = 'status';
+  statusEl.textContent = audioError;
+}
+
+function startAudio(audio, label) {
+  // play() вызывается только из обработчика клика/жеста пользователя,
+  // поэтому браузер не блокирует воспроизведение.
+  const result = audio.play();
+  if (result && typeof result.catch === 'function') {
+    result.catch(error => showAudioError(label, error));
+  }
+}
+
+function stopAudio(audio) {
+  audio.pause();
+  audio.currentTime = 0;
+}
 function initWhite(){
   try{
     audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -154,14 +184,19 @@ function togglePower(){
     if(!audioCtx) initWhite();
     if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
     powerOn=true; powerBtn.textContent='⏻ ВЫКЛ'; powerBtn.classList.add('on'); slider.disabled=false;
+    audioError = '';
     statusEl.textContent='ШШШ...';
     storm.volume=0; b7.volume=0;
-    storm.play().catch(()=>{}); b7.play().catch(()=>{});
+
+    // Не скрываем ошибку play(): раньше она подавлялась пустым catch().
+    // Вызов остаётся внутри клика по кнопке питания.
+    startAudio(storm, 'Радио-шум');
+    startAudio(b7, 'Канал Б-7');
     if(whiteGain) whiteGain.gain.value=0.35;
     updateRadio(); requestAnimationFrame(waterfall);
   }else{
     powerOn=false; powerBtn.textContent='⏻ ВКЛ'; powerBtn.classList.remove('on'); slider.disabled=true;
-    try{ storm.pause(); b7.pause(); }catch(e){}
+    try{ stopAudio(storm); stopAudio(b7); }catch(e){ console.error(e); }
     if(whiteGain) whiteGain.gain.value=0;
     statusEl.textContent='Питание выключено.';
   }
